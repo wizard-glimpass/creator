@@ -1,0 +1,79 @@
+/* .compass-container {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    position: relative;
+    border: 2px solid black;
+    margin: 50px auto;
+}
+
+.compass-arrow {
+    width: 4px;
+    height: 100px;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform-origin: 50% 100%;
+} */
+
+
+.compass-container {
+    width: 200px;
+    margin: 50px auto;
+}
+
+.compass-image {
+    width: 100%;
+    height: 100%;
+}
+
+.compass-label {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.north {
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.south {
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.west {
+    left: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.east {
+    right: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.compass-image {
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+/*
+#needle {
+    transform: rotate(45deg); 
+} */
+
+
+
+.navigation-arrow {
+    width: 10px;
+    height: 13px;
+    align-self: center;
+}
+
+/* If you have additional CSS for the compass SVG, add it here */

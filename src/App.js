@@ -1,23 +1,71 @@
-import logo from './logo.svg';
-import './App.css';
+// entry point for creator
+import { Box, Button } from "@mui/material";
+import "./App.css";
+import { useEffect, useState } from "react";
+import { CREATOR_SELECTION, ROUTE } from "./utils/constants";
+import DirectionContainer from "./component/DirectionContainer";
 
 function App() {
+  const [creatorSelection, setCreatorSelection] = useState(null);
+  const [route, setRoute] = useState(ROUTE.HOMEPAGE);
+
+  useEffect(() => {}, []);
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {route === ROUTE.HOMEPAGE && (
+        <>
+          <div class="company-title-text">
+            <h3>Welcome to GLIMPASS</h3>
+          </div>
+          {creatorSelection === null && (
+            <Box sx={{ "& button": { m: 1 } }}>
+              <div>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => {
+                    setCreatorSelection(CREATOR_SELECTION.START_TRIP);
+                  }}
+                >
+                  Start Trip
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => {
+                    setCreatorSelection(CREATOR_SELECTION.MANAGE_HISTORY);
+                  }}
+                >
+                  Manage trip history
+                </Button>
+              </div>
+            </Box>
+          )}
+          {creatorSelection === CREATOR_SELECTION.START_TRIP && (
+            <Box sx={{ "& button": { m: 1 } }}>
+              <div>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => {
+                    setRoute(ROUTE.DIR_CONTAINER);
+                  }}
+                >
+                  Add Nodee
+                </Button>
+                <Button variant="outlined" size="large">
+                  Add connection
+                </Button>
+              </div>
+            </Box>
+          )}
+        </>
+      )}
+      {route === ROUTE.DIR_CONTAINER && (
+        <>
+          <DirectionContainer />
+        </>
+      )}
     </div>
   );
 }
