@@ -51,9 +51,15 @@ function App() {
                     setRoute(ROUTE.DIR_CONTAINER);
                   }}
                 >
-                  Add Nodee
+                  Add Node
                 </Button>
-                <Button variant="outlined" size="large">
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => {
+                    setRoute(ROUTE.DIR_CONTAINER);
+                  }}
+                >
                   Add connection
                 </Button>
               </div>

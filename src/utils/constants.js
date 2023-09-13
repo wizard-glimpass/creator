@@ -12,8 +12,10 @@ export const ROUTE = {
 };
 
 export const NODE_TYPE = {
-  SHOP: "SHOP",
-  CHECKPOINT: "CHECKPOINT",
+  SHOP: "shop",
+  CHECKPOINT: "checkpoint",
+  FLOOR_CHANGE: "floor_change",
+  GATE: "gate",
 };
 
 export const SUB_NODE_TYPE = {

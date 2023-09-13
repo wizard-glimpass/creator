@@ -81,3 +81,8 @@
   background: aliceblue;
   text-transform: uppercase;
 }
+
+.css-dmmspl-MuiFormGroup-root.manish {
+  display: flex;
+  flex-direction: row;
+}
