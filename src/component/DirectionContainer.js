@@ -292,7 +292,7 @@ const DirectionContainer = () => {
         />
       )}
       {route === ROUTE.PREVIEW_TRIP && (
-        <PreviewTrip trip={tripDataRef.current} />
+        <PreviewTrip trip={tripDataRef.current} setRoute={setRoute} />
       )}
     </div>
   );

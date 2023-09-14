@@ -18,8 +18,10 @@ function Compass(props) {
     boxShadow: 24,
     p: 4,
   };
-
+  const [calcStepsValue, setCalcStepsValue] = useState(0);
   const [open, setOpen] = useState(true);
+  const [modalState, setmodalState] = useState(false);
+  const [confirmAngleAndSteps, setConfirmAngleAndSteps] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
@@ -53,6 +55,7 @@ function Compass(props) {
 
   //////////////////////
   const [alpha, setAlpha] = useState(0);
+  const [originNumber, setOriginNumber] = useState(0);
 
   const offset = useRef(0);
   const [isWalking, setIsWalking] = useState(true);
@@ -61,12 +64,13 @@ function Compass(props) {
 
   const sendAngleStepsPayload = () => {
     const avgAlpha = alphaSum / alphaReadingsCounted;
-    props.setRoute(ROUTE.NODE_CREATE_FORM);
+
     props.addTripMetaData({
       angle: parseInt(avgAlpha),
-      steps: dy,
+      steps: calcStepsValue,
       label: "RELATED_TO",
     });
+    props.setRoute(ROUTE.NODE_CREATE_FORM);
   };
   const handleWalkingToggle = () => {
     // When stopping walking
@@ -75,19 +79,18 @@ function Compass(props) {
     window.alert(
       `Steps Counted: ${dy}\nAverage Alpha(Node is at): ${parseInt(avgAlpha)}`
     );
+    setCalcStepsValue(dy);
+    setConfirmAngleAndSteps(true);
+    setmodalState(true);
     setIsWalking(false);
     setAlphaSum(0);
     setAlphaReadingsCounted(1);
-    sendAngleStepsPayload();
   };
   const handleMotion = (event) => {
     accRef.current = event.acceleration;
 
     const timeInterval = 0;
     distRef.current += parseInt(event.acceleration.x) * timeInterval;
-    // Do stuff with the new orientation data
-
-    //LowPass filteredData
 
     const acc_th = 0.1;
     const time_th = 0.3;
@@ -205,8 +208,13 @@ function Compass(props) {
       window.firstTime = 1;
     }
     dirRef.current = event;
-    const calibratedAlpha = event.alpha + offset.current;
+    let calibratedAlpha = event.alpha + offset.current;
+    if (calibratedAlpha < 0) {
+      calibratedAlpha = -1 * calibratedAlpha;
+      calibratedAlpha = 360 - calibratedAlpha;
+    }
     setAlpha(calibratedAlpha);
+    setOriginNumber(event.alpha);
   };
 
   const requestPermission = () => {
@@ -241,7 +249,7 @@ function Compass(props) {
 
   useEffect(() => {
     if (isWalking) {
-      setAlphaSum((prevSum) => prevSum + (360 - alpha));
+      setAlphaSum((prevSum) => prevSum + alpha);
       setAlphaReadingsCounted((prevCount) => prevCount + 1);
     }
   }, [alpha, isWalking]); // Dependencies ensure this runs whenever alpha or isWalking changes
@@ -253,8 +261,30 @@ function Compass(props) {
     setAlphaSum(0);
     setAlphaReadingsCounted(1);
   };
+
+  console.log(calcStepsValue);
   return (
     <>
+      {confirmAngleAndSteps && (
+        <Modal
+          open={modalState}
+          aria-labelledby="parent-modal-title"
+          aria-describedby="parent-modal-description"
+        >
+          <Box sx={{ ...style }}>
+            <input
+              type="number"
+              value={calcStepsValue}
+              onChange={(e) => {
+                setCalcStepsValue(e.target.value);
+              }}
+            />
+            <Button variant="outlined" onClick={sendAngleStepsPayload}>
+              SubmitNodeData
+            </Button>
+          </Box>
+        </Modal>
+      )}
       {props.isCalibrated < 1 && (
         <Modal
           open={open}
@@ -277,6 +307,7 @@ function Compass(props) {
       <div className="alpha-angle-container">
         <span className="alpha-angle">{parseInt(alpha).toFixed(2)}</span>
       </div>
+
       <br></br>
       <div className="alpha-angle-container">
         <span className="alpha-angle">{dy} </span>

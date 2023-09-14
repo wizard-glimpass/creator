@@ -1,7 +1,9 @@
 import { Button } from "@mui/material";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { ROUTE } from "../utils/constants";
 
 const PreviewTrip = (props) => {
+  const [graphCreated, setGraphcreated] = useState(false);
   const confirmTrip = async () => {
     const requestOptions = {
       method: "POST",
@@ -13,6 +15,8 @@ const PreviewTrip = (props) => {
       requestOptions
     );
     const data = await response.json();
+    setGraphcreated(true);
+    props.setRoute(ROUTE.NODE_CREATE_FORM);
   };
 
   const getAllNodes = async () => {
@@ -24,7 +28,6 @@ const PreviewTrip = (props) => {
       "https://app.glimpass.com/graph/get-all-nodes",
       requestOptions
     );
-
   };
   useEffect(() => {
     getAllNodes();
