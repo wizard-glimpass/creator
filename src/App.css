@@ -86,3 +86,11 @@
   display: flex;
   flex-direction: row;
 }
+
+.show {
+  display: block;
+}
+
+.hide {
+  display: none;
+}

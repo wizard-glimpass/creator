@@ -34,11 +34,17 @@ const PreviewTrip = (props) => {
   }, []);
   return (
     <div>
-      {props.trip.map((place) => {
-        if (place.name) {
-          return <span className="trip-node-ele">{place.name}</span>;
-        }
-        return <hr />;
+      {props.trip.map((place, index) => {
+        return (
+          <div>
+            <span className="trip-node-ele">{place.name}</span>
+            {index + 1 < props.trip.length && (
+              <span className="trip-node-ele">
+                {props.trip[index + 1].angle}
+              </span>
+            )}
+          </div>
+        );
       })}
 
       <Button onClick={confirmTrip}>Confirm Trip</Button>

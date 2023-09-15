@@ -16,6 +16,8 @@ import PreviewTrip from "./PreviewTrip";
 
 const DirectionContainer = () => {
   const [route, setRoute] = useState(ROUTE.NODE_CREATE_FORM);
+
+  const [compassComp, showCompassComp] = useState(false);
   const [allNodes, setAllNodes] = useState([]);
   const [age, setAge] = React.useState(-1);
   const [floor, setFloor] = React.useState(0);
@@ -94,6 +96,11 @@ const DirectionContainer = () => {
       setFloor(0);
       setnodeType(1);
       setnodeSubType(1);
+    }
+    if (route === ROUTE.COMPASS) {
+      showCompassComp(true);
+    } else {
+      showCompassComp(false);
     }
   }, [route]);
 
@@ -282,15 +289,16 @@ const DirectionContainer = () => {
           </div>
         </FormControl>
       )}
-      {route === ROUTE.COMPASS && (
-        <Compass
-          isCalibrated={isCalibrated}
-          setCalibrated={setCalibrated}
-          setRoute={setRoute}
-          addTripMetaData={addTripMetaData}
-          addCheckpoint={addCheckpoint}
-        />
-      )}
+
+      <Compass
+        isCalibrated={isCalibrated}
+        setCalibrated={setCalibrated}
+        setRoute={setRoute}
+        addTripMetaData={addTripMetaData}
+        addCheckpoint={addCheckpoint}
+        showComp={compassComp}
+      />
+
       {route === ROUTE.PREVIEW_TRIP && (
         <PreviewTrip trip={tripDataRef.current} setRoute={setRoute} />
       )}

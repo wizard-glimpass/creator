@@ -19,6 +19,7 @@ function Compass(props) {
     p: 4,
   };
   const [calcStepsValue, setCalcStepsValue] = useState(0);
+  const [isTurning, setTurning] = useState(true);
   const [open, setOpen] = useState(true);
   const [modalState, setmodalState] = useState(false);
   const [confirmAngleAndSteps, setConfirmAngleAndSteps] = useState(false);
@@ -79,7 +80,7 @@ function Compass(props) {
   const [final_speed, setFinalSpeed] = useState(0);
 
   const sendAngleStepsPayload = () => {
-    const avgAlpha = alphaSum / alphaReadingsCounted;
+    const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
 
     props.addTripMetaData({
       angle: parseInt(avgAlpha),
@@ -87,20 +88,21 @@ function Compass(props) {
       label: "RELATED_TO",
     });
     props.setRoute(ROUTE.NODE_CREATE_FORM);
+    steps.current = 0;
+    setdy(0);
+    setAlphaSum(0);
+    setAlphaReadingsCounted(1);
+
+    setConfirmAngleAndSteps(false);
   };
   const handleWalkingToggle = () => {
     // When stopping walking
-    const avgAlpha = alphaSum / alphaReadingsCounted;
+    const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
 
-    window.alert(
-      `Steps Counted: ${dy}\nAverage Alpha(Node is at): ${parseInt(avgAlpha)}`
-    );
     setCalcStepsValue(dy);
     setConfirmAngleAndSteps(true);
     setmodalState(true);
     setIsWalking(false);
-    setAlphaSum(0);
-    setAlphaReadingsCounted(1);
   };
   const handleMotion = (event) => {
     accRef.current = event.acceleration;
@@ -110,7 +112,7 @@ function Compass(props) {
     setDirectionData(dirRef.current);
 
     const acc_th = 0.1;
-    const time_th = 0.3;
+    const time_th = 0.4;
     const travel_th = 4;
 
     let accn_x = parseInt(event.acceleration.x);
@@ -306,6 +308,11 @@ function Compass(props) {
 
     props.setCalibrated();
   };
+  useEffect(() => {
+    if (props.showComp) {
+      setIsWalking(true);
+    }
+  }, [props.showComp]);
 
   useEffect(() => {
     if (props.isCalibrated >= 1) requestPermission();
@@ -324,7 +331,7 @@ function Compass(props) {
   }, [alpha, isWalking]); // Dependencies ensure this runs whenever alpha or isWalking changes
 
   const addCheckpoint = () => {
-    const avgAlpha = alphaSum / alphaReadingsCounted;
+    const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
     props.addCheckpoint(dy, avgAlpha);
     steps.current = 0;
     setdy(0);
@@ -333,8 +340,8 @@ function Compass(props) {
   };
 
   return (
-    <>
-      {confirmAngleAndSteps && (
+    <div className={props.showComp ? "show" : "hide"}>
+      {confirmAngleAndSteps && props.showComp && (
         <Modal
           open={modalState}
           aria-labelledby="parent-modal-title"
@@ -354,7 +361,7 @@ function Compass(props) {
           </Box>
         </Modal>
       )}
-      {props.isCalibrated < 1 && (
+      {props.isCalibrated < 1 && props.showComp && (
         <Modal
           open={open}
           onClose={handleClose}
@@ -386,17 +393,31 @@ function Compass(props) {
         <Button variant="outlined" onClick={handleWalkingToggle}>
           Stop walking
         </Button>
-        <Button
-          variant="outlined"
-          onClick={() => {
-            addCheckpoint();
-            console.log("okay adding checkpoint");
-          }}
-        >
-          Add checkpoint
-        </Button>
+        {isTurning ? (
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setIsWalking(false);
+              setTurning(false);
+              addCheckpoint();
+            }}
+          >
+            Add Checkpoint
+          </Button>
+        ) : (
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setIsWalking(true);
+              setTurning(true);
+              console.log("okay adding checkpoint");
+            }}
+          >
+            start Walking
+          </Button>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
