@@ -1,9 +1,14 @@
+/* index.css */
+
+@import "~slick-carousel/slick/slick.css";
+@import "~slick-carousel/slick/slick-theme.css";
+
 .App {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   /* background: black; */
 }
 
@@ -93,4 +98,19 @@
 
 .hide {
   display: none;
+}
+
+.add-market {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+
+}
+
+.add-market svg {
+  font-size: 40px;
+}
+
+.form-element {
+  width: 100%;
 }

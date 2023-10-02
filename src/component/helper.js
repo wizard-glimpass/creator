@@ -165,3 +165,117 @@ export { yawMatrix, pitchMatrix, rollMatrix, vect, dotProduct, inertialFrame };
 //                 return True
 //     return False
 // }
+
+export const formFields = (comp, defaultValues) => {
+  if (comp === "nodeCreateForm") {
+    return [
+      {
+        name: "name",
+        label: "Node name",
+        type: "text",
+        value: defaultValues?.name || "",
+      },
+      {
+        name: "nodeType",
+        label: "Node Type",
+        type: "select",
+        value: defaultValues?.nodeType || "",
+        options: ["shop", "floor_change", "Gate"],
+      },
+
+      {
+        name: "floorDirection",
+        label: "Direction",
+        type: "select",
+        value: "Bidirectional",
+        options: ["Unidirectional", "Bidirectional"],
+      },
+      {
+        name: "floor",
+        label: "Floor",
+        type: "select",
+        value: defaultValues?.floor || "",
+        options: ["-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5"],
+      },
+    ];
+  } else if (comp === "previewTrip") {
+    return [
+      {
+        name: "name",
+        label: "Node name",
+        type: "text",
+        value: defaultValues.name || "",
+      },
+      {
+        name: "nodeType",
+        label: "Node Type",
+        type: "select",
+        value: defaultValues.nodeType || "",
+        options: ["shop", "floor_change", "Gate"],
+      },
+
+      {
+        name: "direction",
+        label: "Direction",
+        type: "select",
+        value: "Bidirectional",
+        options: ["Unidirectional", "Bidirectional"],
+      },
+      {
+        name: "floor",
+        label: "Floor",
+        type: "select",
+        value: defaultValues.floor || "",
+        options: ["-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5"],
+      },
+      {
+        name: "steps",
+        label: "Steps",
+        type: "text",
+        value: defaultValues.steps || 0,
+      },
+      {
+        name: "angle",
+        label: "Angle",
+        type: "text",
+        value: defaultValues.angle || 0,
+      },
+    ];
+  }
+};
+
+export const prepareTripData = (obj) => {
+  // return object
+
+  const tripArrayPayload = [];
+
+  for (let i = 0; i < obj.nodesData.length; i++) {
+    const tempArray = [
+      { market: window.marketSelection },
+      { label: "RELATED_TO" },
+    ];
+    const nodeObj = obj.nodesData[i];
+
+    for (let j = 0; j < nodeObj.length; j++) {
+      const nodeObjj = nodeObj[j];
+      if (nodeObjj.name == "angle" || nodeObjj.name == "steps") {
+        tempArray[1] = { ...tempArray[1], [nodeObjj.name]: nodeObjj.value };
+      } else if (nodeObjj.name === "floorDirection") {
+        tempArray[0] = {
+          ...tempArray[0],
+          [nodeObjj.name]: nodeObjj.value === "Unidirectional" ? 1 : 0,
+        };
+      } else {
+        tempArray[0] = {
+          ...tempArray[0],
+          [nodeObjj.name]: nodeObjj.value,
+        };
+      }
+    }
+
+    tripArrayPayload.push(tempArray[0]);
+    if (tempArray[1]?.steps !== null) tripArrayPayload.push(tempArray[1]);
+  }
+
+  return tripArrayPayload;
+};

@@ -5,6 +5,7 @@ import "./Compass.css";
 import { Box, Button, Modal } from "@mui/material";
 import { inertialFrame } from "./helper";
 import { ROUTE } from "../utils/constants";
+import GifSlideshow from "./GifSlideshow";
 
 function Compass(props) {
   const style = {
@@ -81,12 +82,27 @@ function Compass(props) {
 
   const sendAngleStepsPayload = () => {
     const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
-
-    props.addTripMetaData({
+    const metaInfo = {
       angle: parseInt(avgAlpha),
       steps: calcStepsValue,
       label: "RELATED_TO",
-    });
+    };
+
+    const stepsObj = {
+      name: "steps",
+      label: "Steps",
+      type: "text",
+      value: calcStepsValue,
+    };
+
+    const angleObj = {
+      name: "angle",
+      label: "Angle",
+      type: "text",
+      value: parseInt(avgAlpha),
+    };
+    props.addTripMetaData(metaInfo);
+    props.modifyTripData("compass", [stepsObj, angleObj]);
     props.setRoute(ROUTE.NODE_CREATE_FORM);
     steps.current = 0;
     setdy(0);
@@ -312,6 +328,9 @@ function Compass(props) {
     if (props.showComp) {
       setIsWalking(true);
     }
+
+    steps.current = 0;
+    setdy(0);
   }, [props.showComp]);
 
   useEffect(() => {
@@ -361,7 +380,7 @@ function Compass(props) {
           </Box>
         </Modal>
       )}
-      {props.isCalibrated < 1 && props.showComp && (
+      {/* {props.isCalibrated < 1 && props.showComp && (
         <Modal
           open={open}
           onClose={handleClose}
@@ -377,6 +396,18 @@ function Compass(props) {
             <Button variant="outlined" onClick={requestPermission}>
               Calibrate
             </Button>
+          </Box>
+        </Modal>
+      )} */}
+      {props.isCalibrated < 1 && props.showComp && (
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="parent-modal-title"
+          aria-describedby="parent-modal-description"
+        >
+          <Box sx={{ ...style }}>
+            <GifSlideshow requestPermission={requestPermission} />
           </Box>
         </Modal>
       )}
@@ -410,7 +441,6 @@ function Compass(props) {
             onClick={() => {
               setIsWalking(true);
               setTurning(true);
-              console.log("okay adding checkpoint");
             }}
           >
             start Walking

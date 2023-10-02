@@ -1,18 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import FormControl from "@mui/material/FormControl";
-import { NODE_TYPE, ROUTE } from "../utils/constants";
-import {
-  Button,
-  Checkbox,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-  FormGroup,
-  FormControlLabel,
-} from "@mui/material";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import { ROUTE } from "../utils/constants";
+import { MenuItem, Select, Typography, Container } from "@mui/material";
 import Compass from "./Compass";
 import PreviewTrip from "./PreviewTrip";
+import DynamicForm from "./DynamicForm";
+import { formFields } from "./helper";
 
 const DirectionContainer = () => {
   const [route, setRoute] = useState(ROUTE.NODE_CREATE_FORM);
@@ -20,14 +12,18 @@ const DirectionContainer = () => {
   const [compassComp, showCompassComp] = useState(false);
   const [allNodes, setAllNodes] = useState([]);
   const [age, setAge] = React.useState(-1);
-  const [floor, setFloor] = React.useState(0);
-  const [nodeType, setnodeType] = useState(1);
-  const [nodeSubType, setnodeSubType] = useState(1);
   const [isCalibrated, setIsCalibrated] = useState(0);
   const nodeDataRef = useRef({ category: [] });
-  const tripDataRef = useRef([]);
+  const nodeDataRefV2 = useRef({
+    nodesData: [],
+    completeTrip: [],
+  });
 
-  const label = { inputProps: { "aria-label": "Checkbox demo" } };
+  const tripDataRef = useRef([]);
+  const defaultVal = useMemo(
+    () => formFields("nodeCreateForm", nodeDataRef.current),
+    [nodeDataRef.current]
+  );
 
   const getAllNodes = async () => {
     const requestOptions = {
@@ -35,7 +31,7 @@ const DirectionContainer = () => {
       headers: { "Content-Type": "application/json" },
     };
     const response = await fetch(
-      "https://app.glimpass.com/graph/get-all-nodes",
+      `https://app.glimpass.com/graph/get-all-nodes?market=${window.marketSelection}`,
       requestOptions
     );
 
@@ -50,32 +46,73 @@ const DirectionContainer = () => {
   };
   useEffect(() => {
     getAllNodes();
+    const cachedTrip = localStorage.getItem("tripData");
+    if (cachedTrip) {
+      nodeDataRefV2.current = JSON.parse(cachedTrip);
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tripData", JSON.stringify(nodeDataRefV2.current));
+  }, [nodeDataRefV2.current]);
 
   const handleChange = (event) => {
     setAge(event.target.value);
     nodeDataRef.current = allNodes[event.target.value];
   };
-  const handleFloorChange = (event) => {
-    setFloor(event.target.value);
-    nodeDataRef.current["floor"] = event.target.value;
-  };
-  const handleNodetypeChange = (event) => {
-    setnodeType(event.target.value);
-    nodeDataRef.current["nodeType"] = event.target.value;
-  };
-  const handleNodeSubtypeChange = (event) => {
-    setnodeSubType(event.target.value);
-    nodeDataRef.current["nodeSubType"] = event.target.value;
-  };
+
   const addTripMetaData = (payload) => {
     tripDataRef.current.push(payload);
   };
 
   const setCalibrated = () => {
-    setIsCalibrated((prev) => prev + 1);
+    setIsCalibrated((prev) => (prev + 1 > 4 ? prev : prev + 1));
   };
 
+  const modifyTripData = (type, tripData) => {
+    let newdata;
+    if (type === "nodeForm") {
+      const prevData = nodeDataRefV2.current.nodesData;
+      prevData.push(tripData);
+      newdata = {
+        ...nodeDataRefV2.current,
+        nodesData: prevData,
+      };
+    } else if (type === "compass") {
+      const prevData = nodeDataRefV2.current.nodesData;
+      const lastIndex = prevData.length - 1;
+      if (lastIndex >= 0) {
+        prevData[lastIndex] = prevData[lastIndex].filter((item) => {
+          return item.name !== "steps" && item.name !== "angle";
+        });
+
+        prevData[lastIndex].push(tripData[0]);
+        prevData[lastIndex].push(tripData[1]);
+      }
+
+      newdata = {
+        ...nodeDataRefV2.current,
+        nodesData: prevData,
+      };
+    } else if (type === "checkpoint") {
+      const prevData = nodeDataRefV2.current.nodesData;
+      prevData.push(tripData);
+      newdata = {
+        ...nodeDataRefV2.current,
+        nodesData: prevData,
+      };
+    } else if (type === "delete") {
+      let prevData = nodeDataRefV2.current.nodesData;
+      prevData.splice(tripData, 1);
+      newdata = {
+        ...nodeDataRefV2.current,
+        nodesData: prevData,
+      };
+    } else if (type === "update") {
+    }
+
+    nodeDataRefV2.current = newdata;
+  };
   const addCheckpoint = (steps, angle) => {
     addTripMetaData({
       angle: parseInt(angle),
@@ -84,18 +121,52 @@ const DirectionContainer = () => {
     });
     nodeDataRef.current["nodeType"] = "checkpoint";
     nodeDataRef.current["name"] = new Date().toString();
+    const checkpointData = [
+      {
+        name: "name",
+        label: "Node name",
+        type: "text",
+        value: new Date().toString(),
+      },
+      {
+        name: "nodeType",
+        label: "Node Type",
+        type: "select",
+        value: "checkpoint",
+        options: ["checkpoint"],
+      },
+
+      {
+        name: "floor",
+        label: "Floor",
+        type: "select",
+        value: 3,
+        options: ["-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5"],
+      },
+    ];
+
+    const stepsObj = {
+      name: "steps",
+      label: "Steps",
+      type: "text",
+      value: steps,
+    };
+
+    const angleObj = {
+      name: "angle",
+      label: "Angle",
+      type: "text",
+      value: parseInt(angle),
+    };
+    modifyTripData("compass", [stepsObj, angleObj]);
+    modifyTripData("checkpoint", checkpointData);
     tripDataRef.current.push(nodeDataRef.current);
     nodeDataRef.current = {};
-
-    console.log(tripDataRef);
   };
 
   useEffect(() => {
     if (route !== ROUTE.NODE_CREATE_FORM) {
       setAge(-1);
-      setFloor(0);
-      setnodeType(1);
-      setnodeSubType(1);
     }
     if (route === ROUTE.COMPASS) {
       showCompassComp(true);
@@ -104,190 +175,56 @@ const DirectionContainer = () => {
     }
   }, [route]);
 
+  const actionBtn = {
+    primary: {
+      text: "Start walking",
+      action: () => {
+        if (nodeDataRef.current["name"]) {
+          tripDataRef.current.push(nodeDataRef.current);
+        }
+        nodeDataRef.current = { category: [] };
+
+        setRoute(ROUTE.COMPASS);
+      },
+    },
+    secondary: {
+      text: "Preview trip",
+      action: () => {
+        if (nodeDataRef.current["name"]) {
+          tripDataRef.current.push(nodeDataRef.current);
+        }
+        nodeDataRef.current = { category: [] };
+        setRoute(ROUTE.PREVIEW_TRIP);
+      },
+      isSubmit: false,
+    },
+  };
   return (
     <div>
       {route === ROUTE.NODE_CREATE_FORM && (
-        <FormControl>
-          <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select-node"
-            className="form-element"
-            value={age}
-            label="Select Node"
-            onChange={handleChange}
-          >
-            <MenuItem value={-1}>Select node</MenuItem>
-            {allNodes.map((node, index) => {
-              return <MenuItem value={index}>{node.name}</MenuItem>;
-            })}
-          </Select>
-          <Typography className="typo-ele">OR</Typography>
-          <TextField
-            className="form-element"
-            id="outlined-basic"
-            label="Node name"
-            variant="outlined"
-            onChange={(e) => {
-              nodeDataRef.current["name"] = e.target.value;
-            }}
-          />
-          <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select-node-type"
-            className="form-element"
-            value={nodeType}
-            label="Select Node Type"
-            onChange={handleNodetypeChange}
-          >
-            <MenuItem value={1}>Select node type</MenuItem>
-            <MenuItem value={NODE_TYPE.SHOP}>Shop</MenuItem>
-
-            <MenuItem value={NODE_TYPE.FLOOR_CHANGE}>Floor Change</MenuItem>
-            <MenuItem value={NODE_TYPE.GATE}>Gate</MenuItem>
-          </Select>
-
-          {nodeType === NODE_TYPE.SHOP && (
+        <>
+          <Container>
             <Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select-node-sub-type"
               className="form-element"
-              value={nodeSubType}
-              label="Select Sub Node Type"
-              onChange={handleNodeSubtypeChange}
+              value={age}
+              label="Select Node"
+              onChange={handleChange}
             >
-              <MenuItem value={1}>Select sub node type</MenuItem>
-              <MenuItem value="shop">Shop</MenuItem>
-              <MenuItem value="showroom">Showroom</MenuItem>
-              <MenuItem value="foodcourt">Foodcourt</MenuItem>
-              <MenuItem value="service center">Service center</MenuItem>
-              <MenuItem value="others">Others</MenuItem>
+              <MenuItem value={-1}>Select node</MenuItem>
+              {allNodes.map((node, index) => {
+                return <MenuItem value={index}>{node.name}</MenuItem>;
+              })}
             </Select>
-          )}
+            <Typography className="typo-ele">OR</Typography>
+          </Container>
 
-          <FormGroup className="manish" style={{ background: "none" }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  value="clothes"
-                  onChange={(e) => {
-                    nodeDataRef.current["category"] = [
-                      ...nodeDataRef.current["category"],
-                      e.target.value,
-                    ];
-                  }}
-                />
-              }
-              label="Clothes"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  onChange={(e) => {
-                    nodeDataRef.current["category"] = [
-                      ...nodeDataRef.current["category"],
-                      e.target.value,
-                    ];
-                  }}
-                  value="food"
-                />
-              }
-              label="Food"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  onChange={(e) => {
-                    nodeDataRef.current["category"] = [
-                      ...nodeDataRef.current["category"],
-                      e.target.value,
-                    ];
-                  }}
-                  value="games"
-                />
-              }
-              label="Games"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  onChange={(e) => {
-                    nodeDataRef.current["category"] = [
-                      ...nodeDataRef.current["category"],
-                      e.target.value,
-                    ];
-                  }}
-                  value="xyz"
-                />
-              }
-              label="xyz"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  onChange={(e) => {
-                    nodeDataRef.current["category"] = [
-                      ...nodeDataRef.current["category"],
-                      e.target.value,
-                    ];
-                  }}
-                  value="pqrs"
-                />
-              }
-              label="pqrs"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  onChange={(e) => {
-                    nodeDataRef.current["category"] = [
-                      ...nodeDataRef.current["category"],
-                      e.target.value,
-                    ];
-                  }}
-                  value="good"
-                />
-              }
-              label="good"
-            />
-          </FormGroup>
-          <Select
-            labelId="demo-simple-select-label-floor"
-            id="demo-simple-select-floor"
-            className="form-element"
-            value={floor}
-            label="Select Floor"
-            onChange={handleFloorChange}
-          >
-            <MenuItem value={0}>Select floor</MenuItem>
-            <MenuItem value={1}>1</MenuItem>
-            <MenuItem value={2}>2</MenuItem>
-            <MenuItem value={3}>3</MenuItem>
-          </Select>
-          <div className="button-container">
-            <Button
-              variant="outlined"
-              onClick={() => {
-                tripDataRef.current.push(nodeDataRef.current);
-                nodeDataRef.current = { category: [] };
-
-                setRoute(ROUTE.COMPASS);
-              }}
-            >
-              Start Walking
-            </Button>
-
-            <Button
-              onClick={() => {
-                tripDataRef.current.push(nodeDataRef.current);
-                nodeDataRef.current = { category: [] };
-                setRoute(ROUTE.PREVIEW_TRIP);
-              }}
-              variant="outlined"
-            >
-              Preview Trip
-            </Button>
-          </div>
-        </FormControl>
+          <DynamicForm
+            modifyTripData={modifyTripData}
+            actionBtn={actionBtn}
+            intialFields={defaultVal}
+            renderComp="nodeForm"
+          />
+        </>
       )}
 
       <Compass
@@ -297,10 +234,16 @@ const DirectionContainer = () => {
         addTripMetaData={addTripMetaData}
         addCheckpoint={addCheckpoint}
         showComp={compassComp}
+        modifyTripData={modifyTripData}
       />
 
       {route === ROUTE.PREVIEW_TRIP && (
-        <PreviewTrip trip={tripDataRef.current} setRoute={setRoute} />
+        <PreviewTrip
+          trip={tripDataRef.current}
+          setRoute={setRoute}
+          modifyTripData={modifyTripData}
+          allNodesData={nodeDataRefV2.current}
+        />
       )}
     </div>
   );
