@@ -2,24 +2,14 @@
 import React, { useState } from "react";
 import { Button } from "@mui/material";
 
-const gifs = [
-  "https://media.giphy.com/media/l0ErFafpUCQTkqsQE/giphy.gif",
-  "https://media.giphy.com/media/26Ff5evMweBsENWqk/giphy.gif",
-  // ... more GIF URLs
-];
-
 const instructions = [
   {
-    title: "Please walk towards to the shop",
-    description: "Heads up your device towards shop gate !",
-  },
-  {
-    title: "Open your compass app in device and heads up to NORTH direction",
-    description: "Heads up your device towards shop gate !",
+    title: "Head up toward shop gate ",
+    description: "Click on submit button to submit shop angle!",
   },
 ];
 
-function GifSlideshow({ requestPermission }) {
+function Calibrate({ modifyTripData, currentAngle, setClose }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNext = () => {
@@ -36,7 +26,16 @@ function GifSlideshow({ requestPermission }) {
         variant="outlined"
         onClick={
           currentIndex == instructions.length - 1
-            ? requestPermission
+            ? () => {
+                const d = {
+                  name: "shop_angle",
+                  label: "ShopAngle",
+                  type: "text",
+                  value: 360 - currentAngle,
+                };
+                modifyTripData("shopAngle", d);
+                setClose();
+              }
             : handleNext
         }
       >
@@ -46,4 +45,4 @@ function GifSlideshow({ requestPermission }) {
   );
 }
 
-export default GifSlideshow;
+export default Calibrate;

@@ -94,6 +94,17 @@ const DirectionContainer = () => {
         ...nodeDataRefV2.current,
         nodesData: prevData,
       };
+    } else if (type === "shopAngle") {
+      const prevData = nodeDataRefV2.current.nodesData;
+      const lastIndex = prevData.length - 1;
+      if (lastIndex >= 0) {
+        prevData[lastIndex].push(tripData);
+      }
+
+      newdata = {
+        ...nodeDataRefV2.current,
+        nodesData: prevData,
+      };
     } else if (type === "checkpoint") {
       const prevData = nodeDataRefV2.current.nodesData;
       prevData.push(tripData);

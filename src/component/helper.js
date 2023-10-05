@@ -180,7 +180,7 @@ export const formFields = (comp, defaultValues) => {
         label: "Node Type",
         type: "select",
         value: defaultValues?.nodeType || "",
-        options: ["shop", "floor_change", "Gate"],
+        options: ["shop", "floor_change", "Gate", "washroom"],
       },
 
       {

@@ -6,6 +6,7 @@ import { Box, Button, Modal } from "@mui/material";
 import { inertialFrame } from "./helper";
 import { ROUTE } from "../utils/constants";
 import GifSlideshow from "./GifSlideshow";
+import Calibrate from "./Calibrate";
 
 function Compass(props) {
   const style = {
@@ -22,11 +23,16 @@ function Compass(props) {
   const [calcStepsValue, setCalcStepsValue] = useState(0);
   const [isTurning, setTurning] = useState(true);
   const [open, setOpen] = useState(true);
+  const [calibrateModal, setCalibrateModal] = useState(true);
   const [modalState, setmodalState] = useState(false);
   const [confirmAngleAndSteps, setConfirmAngleAndSteps] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleCalibrationModalClose = () => {
+    setCalibrateModal(false);
   };
   ///////////////////////
 
@@ -294,6 +300,7 @@ function Compass(props) {
       offset.current = -1 * parseInt(event.alpha);
       window.firstTime = 1;
     }
+
     dirRef.current = event;
     let calibratedAlpha = event.alpha + offset.current;
     if (calibratedAlpha < 0) {
@@ -327,10 +334,12 @@ function Compass(props) {
   useEffect(() => {
     if (props.showComp) {
       setIsWalking(true);
+      setCalibrateModal(true);
     }
 
     steps.current = 0;
     setdy(0);
+    // started
   }, [props.showComp]);
 
   useEffect(() => {
@@ -399,11 +408,28 @@ function Compass(props) {
           </Box>
         </Modal>
       )} */}
+
+      {calibrateModal && props.showComp && (
+        <Modal
+          open={calibrateModal}
+          onClose={handleCalibrationModalClose}
+          aria-labelledby="parent-modal-title"
+          aria-describedby="parent-modal-description"
+        >
+          <Box sx={{ ...style }}>
+            <Calibrate
+              currentAngle={alpha}
+              modifyTripData={props.modifyTripData}
+              setClose={handleCalibrationModalClose}
+            />
+          </Box>
+        </Modal>
+      )}
       {props.isCalibrated < 1 && props.showComp && (
         <Modal
           open={open}
           onClose={handleClose}
-          aria-labelledby="parent-modal-title"
+          aria-labelledby="north-calibrate"
           aria-describedby="parent-modal-description"
         >
           <Box sx={{ ...style }}>
