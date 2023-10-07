@@ -31,7 +31,7 @@ function Calibrate({ modifyTripData, currentAngle, setClose }) {
                   name: "shop_angle",
                   label: "ShopAngle",
                   type: "text",
-                  value: 360 - currentAngle,
+                  value: currentAngle,
                 };
                 modifyTripData("shopAngle", d);
                 setClose();

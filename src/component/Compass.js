@@ -71,11 +71,10 @@ function Compass(props) {
 
   //////////////////////
   const [alpha, setAlpha] = useState(0);
-  const [originNumber, setOriginNumber] = useState(0);
 
   const offset = useRef(0);
   const [isWalking, setIsWalking] = useState(true);
-  const [alphaSum, setAlphaSum] = useState(0);
+  const [alphaSum, setAlphaSum] = useState({ sinAlphaSum: 0, cosAlphaSum: 0 });
   const [alphaReadingsCounted, setAlphaReadingsCounted] = useState(0);
 
   const [X, setX] = useState(0);
@@ -87,7 +86,10 @@ function Compass(props) {
   const [final_speed, setFinalSpeed] = useState(0);
 
   const sendAngleStepsPayload = () => {
-    const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
+    const avgX = alphaSum.cosAlphaSum / alphaReadingsCounted;
+    const avgY = alphaSum.sinAlphaSum / alphaReadingsCounted;
+    const avgAlpha = (Math.atan2(avgY, avgX) * (180 / Math.PI) + 360) % 360;
+
     const metaInfo = {
       angle: parseInt(avgAlpha),
       steps: calcStepsValue,
@@ -112,14 +114,13 @@ function Compass(props) {
     props.setRoute(ROUTE.NODE_CREATE_FORM);
     steps.current = 0;
     setdy(0);
-    setAlphaSum(0);
+    setAlphaSum({ sinAlphaSum: 0, cosAlphaSum: 0 });
     setAlphaReadingsCounted(1);
 
     setConfirmAngleAndSteps(false);
   };
   const handleWalkingToggle = () => {
     // When stopping walking
-    const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
 
     setCalcStepsValue(dy);
     setConfirmAngleAndSteps(true);
@@ -302,13 +303,10 @@ function Compass(props) {
     }
 
     dirRef.current = event;
-    let calibratedAlpha = event.alpha + offset.current;
-    if (calibratedAlpha < 0) {
-      calibratedAlpha = -1 * calibratedAlpha;
-      calibratedAlpha = 360 - calibratedAlpha;
-    }
-    setAlpha(calibratedAlpha);
-    setOriginNumber(event.alpha);
+
+    let calibratedAlpha = (360 + parseInt(event.alpha) + offset.current) % 360;
+
+    setAlpha(360 - calibratedAlpha);
   };
 
   const requestPermission = () => {
@@ -353,14 +351,31 @@ function Compass(props) {
 
   useEffect(() => {
     if (isWalking) {
-      setAlphaSum((prevSum) => prevSum + alpha);
+      setAlphaSum((prevAngle) => {
+        let sumX = prevAngle.cosAlphaSum;
+        let sumY = prevAngle.sinAlphaSum;
+
+        sumX += Math.cos(alpha * (Math.PI / 180));
+        sumY += Math.sin(alpha * (Math.PI / 180));
+
+        return { sinAlphaSum: sumY, cosAlphaSum: sumX };
+      });
       setAlphaReadingsCounted((prevCount) => prevCount + 1);
+
+      const avgX = alphaSum.cosAlphaSum / alphaReadingsCounted;
+      const avgY = alphaSum.sinAlphaSum / alphaReadingsCounted;
+      const avgAngle = (Math.atan2(avgY, avgX) * (180 / Math.PI) + 360) % 360;
+
+      window.avgAngle = avgAngle;
     }
-  }, [alpha, isWalking]); // Dependencies ensure this runs whenever alpha or isWalking changes
+  }, [dy, isWalking]); // Dependencies ensure this runs whenever alpha or isWalking changes
 
   const addCheckpoint = () => {
-    const avgAlpha = 360 - alphaSum / alphaReadingsCounted;
-    props.addCheckpoint(dy, avgAlpha);
+    const avgX = alphaSum.cosAlphaSum / alphaReadingsCounted;
+    const avgY = alphaSum.sinAlphaSum / alphaReadingsCounted;
+    const avgAngle = (Math.atan2(avgY, avgX) * (180 / Math.PI) + 360) % 360;
+
+    props.addCheckpoint(dy, avgAngle);
     steps.current = 0;
     setdy(0);
     setAlphaSum(0);
@@ -437,6 +452,9 @@ function Compass(props) {
           </Box>
         </Modal>
       )}
+      <p>average alpha :{window.avgAngle}</p>
+      {/* <p>average sum:{alphaSum} </p> */}
+      <p>interval :{alphaReadingsCounted}</p>
       <div className="alpha-angle-container">
         <span className="alpha-angle">{parseInt(alpha).toFixed(2)}</span>
       </div>
